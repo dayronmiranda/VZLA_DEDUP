@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-import hashlib
-import hmac
 import os
+
+from shared.hashing import hmac_hex
 
 
 HMAC_PREFIX = "hmac_sha256:"
 
-
-def _normalize_value(value: str) -> str:
-    return " ".join((value or "").lower().strip().split())
 
 def hmac_token(value: str, secret_env: str = "PII_HMAC_SECRET") -> str:
     secret = os.getenv(secret_env)
@@ -17,9 +14,8 @@ def hmac_token(value: str, secret_env: str = "PII_HMAC_SECRET") -> str:
         raise RuntimeError(
             f"Falta variable {secret_env}. No uses hash simple para cédulas/teléfonos."
         )
-    normalized = _normalize_value(value)
-    digest = hmac.new(secret.encode(), normalized.encode(), hashlib.sha256).hexdigest()
-    return f"{HMAC_PREFIX}{digest}"
+    digest = hmac_hex(value, secret)
+    return f"{HMAC_PREFIX}{digest or ''}"
 
 
 def hmac_digest(value: str, secret_env: str = "PII_HMAC_SECRET") -> str:
