@@ -5,7 +5,7 @@ Tras los terremotos del 24 de junio, miles de familias buscan a sus seres querid
 
 Este proyecto recolecta esos registros dispersos, los unifica en una sola base de datos limpia, deduplicada y consultable, y los expone via API para que cualquier dev pueda construir encima.
 
-→ [Documentación](https://docs.google.com/document/d/1RzTa_bjouoZrjoS-fo1ojqUxjaTYy_w5Fg6Ad3fX8TU/edit?usp=sharing) · [Contribuir](./CONTRIBUTING.md) · [Reportar un problema](../../issues)
+→ [Documentación](https://docs.google.com/document/d/1RzTa_bjouoZrjoS-fo1ojqUxjaTYy_w5Fg6Ad3fX8TU/edit?usp=sharing) · [Contribuir](./CONTRIBUTING.MD) · [Reportar un problema](../../issues)
 
 ---
 
@@ -46,7 +46,7 @@ Este proyecto ataca esas preguntas en 6 etapas:
 
 El siguiente diagrama muestra el flujo completo de datos: desde las fuentes originales hasta la base de datos, pasando por adapters, parsers, modelos tipados y los módulos de limpieza compartida.
 
-![Arquitectura del pipeline](./docs/pipeline.svg)
+![Arquitectura del pipeline](./docs/issues/pipeline.svg)
 
 > Fuente editable: [`docs/issues/pipeline.dot`](./docs/issues/pipeline.dot) (Graphviz)
 
@@ -188,7 +188,7 @@ El campo `needs` acepta únicamente keywords normalizadas: `agua` · `alimentos`
 
 El siguiente diagrama muestra las dependencias entre los issues activos del proyecto. Úsalo como referencia para entender qué bloquea qué antes de empezar a trabajar.
 
-![Mapa de dependencias de issues](./docs/issues_graph.svg)
+![Mapa de dependencias de issues](./docs/issues/issues_graph.svg)
 
 > Fuente editable: [`docs/issues/issues_graph.dot`](./docs/issues/issues_graph.dot) (GraphViz)
 
@@ -258,7 +258,7 @@ pytest scrapers/tests
 
 ## Contribuciones
 
-Lee [CONTRIBUTING.md](./CONTRIBUTING.md) antes de empezar. La versión corta:
+Lee [CONTRIBUTING.md](./CONTRIBUTING.MD) antes de empezar. La versión corta:
 
 1. Crea una rama desde main: `git checkout -b scrapers/lo-que-vas-a-hacer`
 2. Haz tus cambios y corre `pytest scrapers/tests`
