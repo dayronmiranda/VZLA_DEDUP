@@ -1,83 +1,124 @@
 # VZLA_DEDUP
-Limpiemos los registros en esta crisis
+Limpiemos los registros en esta crisis.
 
-[Docs](https://docs.google.com/document/d/1RzTa_bjouoZrjoS-fo1ojqUxjaTYy_w5Fg6Ad3fX8TU/edit?usp=sharing)
+Venezuela necesita una base de datos centralizada y confiable de personas desaparecidas, necesidades activas e infraestructura afectada. Hay docenas de páginas con información valiosa pero fragmentada, duplicada y sin verificar. Este proyecto la consolida y la expone via API para que cualquier dev pueda construir encima.
 
-# El problema
+→ [Documentación](https://docs.google.com/document/d/1RzTa_bjouoZrjoS-fo1ojqUxjaTYy_w5Fg6Ad3fX8TU/edit?usp=sharing) · [Contribuir](./CONTRIBUTING.md) · [Reportar un problema](../../issues)
 
-Hay miles de páginas, donde miles de personas suben datos relevantes, pero están todos descentralizados y no son accesibles. Esto hace que al querer crear una página nueva, proporcionemos datos duplicados, no verificados, obsoletos o irrelevantes. 
+---
 
-Este grupo se enfoca en arreglar este problema, a crear una base de datos centralizada y fiable. Esta BD la repartiremos mediante un API a las demás personas.
+## El problema
 
-## Las etapas
+Miles de personas suben datos relevantes a distintas páginas, pero están todos descentralizados. Esto genera duplicados, datos obsoletos y registros sin verificar. Cualquier dev que quiera construir algo útil hoy no tiene una fuente limpia de donde partir.
 
-Antes de hablar de una solución, entendamos a que nos enfrentamos
+El reto es de criterio:
 
-1. Recolección de datos: No podemos trabajar si no tenemos datos.
-2. Serializar datos: Tendremos imágenes, texto y distintos formatos, necesitamos estandarizarlos.
-3. Protección de datos: Los datos más sensibles como cédulas se tienen que hashear.
-4. Depuración: Necesitamos eliminar duplicados y datos obsoletos. Esta es la etapa más peligrosa.
-5. Almacenar: Guardamos los datos en una base de datos cifrada.
-6. Verificación: Finalmente tenemos que corroborar si los datos corresponden con la realidad.
+- Cómo sabemos que dos registros son la misma persona?
+- Cómo descartamos datos sin cometer un error que cueste una vida?
+- Cómo verificamos que lo que dice una página corresponde con la realidad?
 
-La recolección, serializar datos, protección y almacenamiento son las partes más simples. Scrapers, formaters y listo.
+Este proyecto ataca esas preguntas en 6 etapas:
 
-El problema es la depuración y verificación.
+1. **Recolección**: scrapers contra páginas, APIs y archivos manuales
+2. **Serialización**: estandarizar texto, imágenes y formatos distintos
+3. **Protección**: hashear cédulas y datos sensibles antes de almacenar
+4. **Deduplicación**: detectar y colapsar registros duplicados
+5. **Almacenamiento**: base de datos cifrada con trazabilidad completa
+6. **Verificación**: corroborar claims contra fuentes externas y realidad física
 
-Para depurar, como determinamos que un dato esta duplicado? Que es obsoleto? Que no es relevante? El problema es que tratamos con información delicada, si descartamos información que era importante cometimos un error.
-
-Verificar requiere contacto con la realidad física, aquí vamos a depender de páginas externas para que nos ayuden.
+---
 
 ## Equipos
 
-- Scrapers/Cleaners: Buscan data, la serializan, hashean y depuran.
-- DB/API Managers: Manejan la bases de datos y su cifrado, crea los endpoints a los que se van a conectar los devs externos.
-- Verification Team: Se encargan de hablar con páginas existentes, nos mandan datos relevantes y nos ayudan a entender como es que hay que hacer para verificar la data.
+| Equipo | Responsabilidad |
+|---|---|
+| **Scrapers/Cleaners** | Recolectar, normalizar, sanear y deduplicar datos |
+| **DB/API** | Base de datos, cifrado, endpoints para devs externos |
+| **Verification** | Contactar fuentes externas, validar claims en vivo |
 
-# Estructura Actual
+¿Quieres unirte? Escribe en el canal de Telegram o abre un Issue.
+
+---
+
+## Estado actual
+
+El pipeline de scrapers está operativo con datos. La API y la capa de almacenamiento están en construcción.
 
 ```
-.
-├── api
-│   ├── __init__.py
+api/                        → FastAPI (en construcción)
 │   ├── auth.py
 │   ├── main.py
-│   └── routes
-├── LICENSE
-├── README.md
-├── scrapers
-│   ├── __init__.py
-│   └── sources
-├── shared
-│   ├── __init__.py
-│   ├── config.py
-│   ├── hashing.py
-│   └── storage.py
-└── verification
-    └── __init__.py
+│   └── routes/
+scrapers/                   → Pipeline principal
+│   ├── cli.py              → Punto de entrada CLI
+│   ├── config/             → Fuentes de datos configurables
+│   ├── pipelines/          → Orquestador
+│   ├── fetchers/           → HTTP + archivos locales
+│   ├── extractors/         → HTML, JSON, RSS, texto
+│   ├── sanitizers/         → Detección y redacción de PII
+│   ├── dedup/              → Deduplicación por fingerprint
+│   ├── outputs/            → Exportación JSONL
+│   └── tests/
+shared/                     → Config, hashing y storage compartido
+verification/               → (próximamente)
 ```
 
-## Contribuciones
+---
 
-Estamos usando pull requests que solo se aceptan con verificación de una persona más.
+## Quickstart
 
-1. Crea tus cambios, commit.
-2. Crea una nueva rama `git checkout -b <nombre_de_tu_rama>`
-3. Haz push
-4. Ve a Github, crea el pull request, documenta y espera a que otro miembro del equipo lo acepte.
+```bash
+git clone https://github.com/DataVenezuela/VZLA_DEDUP.git
+cd VZLA_DEDUP
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r scrapers/requirements.txt
 
+# Correr demo offline con datos locales
+python -m scrapers.cli run --config scrapers/config/sources.demo.yaml
+
+# Correr tests
+pytest scrapers/tests
+```
+
+---
 
 ## Stack
 
-Los frameworks que usamos
-### Scrapping
+**Scrapers/Cleaners**
+- Python: `requests`, `BeautifulSoup`, `PyYAML`
+- Detección de PII con regex + HMAC para correlación de cédulas
 
+**DB/API**
+- PostgreSQL
+- FastAPI (Python)
+- SQLAlchemy
 
+**Deduplicación**
+- Fingerprint SHA-256 por contenido normalizado
+- Jaro-Winkler + Metaphone-ES para nombres (en desarrollo)
 
-### API/DB
+---
 
-- PSQL
-- FastAPI - Python
+## Contribuciones
 
+Lee [CONTRIBUTING.md](./CONTRIBUTING.md) antes de empezar. La versión corta:
 
-### Validation
+1. Crea una rama desde main: `git checkout -b scrapers/lo-que-vas-a-hacer`
+2. Haz tus cambios y corre `pytest scrapers/tests`
+3. Abre un Pull Request, necesita 1 aprobación antes de mergear a main
+4. No commitees datos reales, dumps ni archivos con PII
+
+---
+
+## Seguridad y datos personales
+
+Este proyecto maneja información de personas desaparecidas. Las reglas son estrictas:
+
+- Cédulas y teléfonos se redactan o se HMAC antes de exportar, nunca en claro
+- Los outputs del pipeline van a `scrapers/runtime_output/` (en `.gitignore`), nunca al repo
+- Existe un mecanismo de eliminación de datos a pedido
+
+---
+
+MIT License · 2026 · DataVenezuela
