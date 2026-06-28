@@ -42,6 +42,7 @@ from typing import Any, Iterator
 import httpx
 
 from .base import AdapterProtocol, RawContent
+from scrapers.adapters.http_client import USER_AGENT
 
 log = logging.getLogger(__name__)
 
@@ -57,10 +58,9 @@ _BACKOFF_MAX = 60.0              # techo del backoff
 _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 
 _DEFAULT_HEADERS: dict[str, str] = {
-    "User-Agent": "VZLA_DEDUP_Scraper/0.3 (+public-interest emergency-data-cleanup)",
+    "User-Agent": USER_AGENT,
     "Accept": "application/json",
 }
-
 
 # ---------------------------------------------------------------------------
 # Helpers internos
