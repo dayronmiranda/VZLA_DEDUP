@@ -3,7 +3,7 @@ from __future__ import annotations
 import requests
 
 from scrapers.normalizers import normalize_location
-from scrapers.normalizers.location import geocode_osm
+from scrapers.normalizers.location import _load_location_synonyms, geocode_osm
 
 
 def test_location_normalizer_returns_schema_shape_offline() -> None:
@@ -161,8 +161,6 @@ def test_geocode_osm_returns_none_on_request_error(monkeypatch) -> None:
 
 # --- Tests for location synonym dictionary (#54) ---
 
-from scrapers.normalizers.location import _load_location_synonyms
-
 
 def test_synonym_dict_loads() -> None:
     """Dictionary loads successfully and has entries."""
@@ -235,7 +233,7 @@ def test_synonym_geocode_uses_canonical_name() -> None:
     """When geocoding, the OSM query uses the canonical form, not the synonym."""
     from unittest.mock import MagicMock
     mock_geocoder = MagicMock(return_value=(10.48, -66.9))
-    result = normalize_location("ccs", geocode=True, geocoder=mock_geocoder)
+    normalize_location("ccs", geocode=True, geocoder=mock_geocoder)
     # The geocoder should have been called with the canonical form
     call_args = mock_geocoder.call_args[0]
     assert "caracas" in call_args[0].lower()
