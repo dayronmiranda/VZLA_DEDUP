@@ -120,6 +120,22 @@ def test_fetch_source_uses_html_static_source_config() -> None:
     assert result["html_title"] == "Reporte Demo"
 
 
+def test_pipeline_registry_uses_html_adapter_for_html_static() -> None:
+    from scrapers.pipelines.run_pipeline import _get_adapter
+
+    adapter = _get_adapter(_source_config())
+
+    assert isinstance(adapter, HtmlAdapter)
+
+
+def test_pipeline_registry_keeps_rss_static_adapter() -> None:
+    from scrapers.pipelines.run_pipeline import _get_adapter
+
+    adapter = _get_adapter(_source_config(source_type="rss"))
+
+    assert not isinstance(adapter, HtmlAdapter)
+
+
 def test_fetch_accepts_source_config_keyword() -> None:
     fetcher, calls = _fake_fetcher()
     config = _source_config()
