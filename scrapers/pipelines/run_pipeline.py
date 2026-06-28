@@ -86,9 +86,8 @@ def _get_adapter(source: SourceConfig) -> Any:
         adapter = ApiAdapter(
             base_url=base_url,
             source_key=source.id,
+            default_path=path,
         )
-        # Adjuntamos el path para que _run_source lo use
-        adapter.default_path = path  # Pass path to constructor instead of monkey-patching private attr
         return adapter
 
     if stype in ("html_static", "rss"):

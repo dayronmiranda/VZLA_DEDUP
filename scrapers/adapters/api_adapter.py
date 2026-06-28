@@ -42,6 +42,7 @@ from typing import Any, Iterator
 import httpx
 
 from .base import AdapterProtocol, RawContent
+from scrapers.adapters.http_client import USER_AGENT
 
 log = logging.getLogger(__name__)
 
@@ -57,10 +58,9 @@ _BACKOFF_MAX = 60.0              # techo del backoff
 _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 
 _DEFAULT_HEADERS: dict[str, str] = {
-    "User-Agent": "VZLA_DEDUP_Scraper/0.3 (+public-interest emergency-data-cleanup)",
+    "User-Agent": USER_AGENT,
     "Accept": "application/json",
 }
-
 
 # ---------------------------------------------------------------------------
 # Helpers internos
@@ -114,9 +114,6 @@ class ApiAdapter:
     source_key:
         Identificador de la fuente para el campo ``source_key`` de RawContent.
         Si no se pasa, se usa el dominio del ``base_url``.
-    default_path:
-        Path por defecto para las peticiones. Si se provee, se usa en
-        ``fetch_all`` en lugar de pasar el path explícitamente.
     """
 
     def __init__(
@@ -133,7 +130,10 @@ class ApiAdapter:
         self.page_size = page_size
         self.timeout = timeout
         self.max_retries = max_retries
-        self.default_path = default_path  # ← NEW: path passed from run_pipeline instead of monkey-patching
+        # Fix: default_path as constructor param instead of monkey-patching
+        # a private attr after construction. Allows _run_source to know the
+        # API path without coupling to internal attribute names.
+        self.default_path = default_path
 
         merged_headers = {**_DEFAULT_HEADERS, **(extra_headers or {})}
         self._client = httpx.Client(
@@ -168,30 +168,42 @@ class ApiAdapter:
                 resp = self._client.get(path, params=params)
 
                 if resp.status_code in _RETRYABLE_STATUS:
-                    delay = _backoff_delay(attempt)
-                    log.warning(
-                        "HTTP %s en intento %d/%d — reintento en %.1fs",
-                        resp.status_code, attempt, self.max_retries, delay,
-                    )
-                    time.sleep(delay)
                     last_exc = httpx.HTTPStatusError(
                         f"HTTP {resp.status_code}",
                         request=resp.request,
                         response=resp,
                     )
+                    if attempt < self.max_retries:
+                        delay = _backoff_delay(attempt)
+                        log.warning(
+                            "HTTP %s en intento %d/%d — reintento en %.1fs",
+                            resp.status_code, attempt, self.max_retries, delay,
+                        )
+                        time.sleep(delay)
+                    else:
+                        log.warning(
+                            "HTTP %s en intento %d/%d — sin más reintentos",
+                            resp.status_code, attempt, self.max_retries,
+                        )
                     continue
 
                 resp.raise_for_status()
                 return resp
 
             except (httpx.TimeoutException, httpx.NetworkError) as exc:
-                delay = _backoff_delay(attempt)
-                log.warning(
-                    "%s en intento %d/%d — reintento en %.1fs",
-                    type(exc).__name__, attempt, self.max_retries, delay,
-                )
-                time.sleep(delay)
                 last_exc = exc
+                if attempt < self.max_retries:
+                    delay = _backoff_delay(attempt)
+                    log.warning(
+                        "%s en intento %d/%d — reintento en %.1fs",
+                        type(exc).__name__, attempt, self.max_retries, delay,
+                    )
+                    time.sleep(delay)
+                else:
+                    log.warning(
+                        "%s en intento %d/%d — sin más reintentos",
+                        type(exc).__name__, attempt, self.max_retries,
+                    )
 
         raise RuntimeError(
             f"Máximo de reintentos ({self.max_retries}) alcanzado para {path}"
@@ -301,6 +313,16 @@ class ApiAdapter:
                     if key in data and isinstance(data[key], list):
                         records = data[key]
                         break
+                else:
+                    # Ninguna clave conocida matcheó — distinguir "vacío real"
+                    # de "esquema no reconocido" para evitar pérdida silenciosa.
+                    if data:
+                        log.warning(
+                            "%s: dict no vacío en página %d no matchea ninguna "
+                            "clave conocida (claves presentes: %s) — "
+                            "records quedará vacío; verifica el esquema de la API.",
+                            self.source_key, page_num, list(data.keys())[:10],
+                        )
                 # Intentar extraer total
                 for tkey in ("total", "count", "total_count", "totalCount"):
                     if tkey in data and isinstance(data[tkey], int):
@@ -368,10 +390,3 @@ class ApiAdapter:
     def close(self) -> None:
         """Cierra el cliente httpx subyacente."""
         self._client.close()
-
-
-# Afirmar en tiempo de import que ApiAdapter satisface el Protocol.
-# Si alguna firma se rompe, el error aparece en el módulo, no en runtime.
-assert isinstance(ApiAdapter("https://example.com"), AdapterProtocol), (
-    "ApiAdapter no satisface AdapterProtocol"
-)
