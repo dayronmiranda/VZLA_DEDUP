@@ -41,7 +41,10 @@ class AcopioCenter(BaseModel):
             return v
         if set(v) != {"lat", "lon"}:
             raise ValueError("coordinates must have exactly keys 'lat' and 'lon'")
-        lat, lon = float(v["lat"]), float(v["lon"])
+        try:
+            lat, lon = float(v["lat"]), float(v["lon"])
+        except (TypeError, ValueError) as exc:
+            raise ValueError("coordinates lat/lon must be numeric") from exc
         if not -90.0 <= lat <= 90.0 or not -180.0 <= lon <= 180.0:
             raise ValueError("coordinates out of valid lat/lon range")
         return {"lat": lat, "lon": lon}

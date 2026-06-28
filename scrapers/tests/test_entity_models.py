@@ -99,6 +99,20 @@ def test_acopio_center_coordinates():
             fuente="s",
             coordinates={"lat": 10.0},
         )
+    with pytest.raises(ValidationError):
+        AcopioCenter(
+            name="R",
+            location_text="L",
+            fuente="s",
+            coordinates={"lat": None, "lon": 0},
+        )
+    with pytest.raises(ValidationError):
+        AcopioCenter(
+            name="R",
+            location_text="L",
+            fuente="s",
+            coordinates={"lat": 10.0, "lon": None},
+        )
 
 
 def test_event_valid_and_date_iso_validation():
