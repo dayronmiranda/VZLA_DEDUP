@@ -51,8 +51,10 @@ from scrapers.pipelines.run_pipeline import _get_adapter, run_pipeline
 # Campos que todo registro exportado debe tener (Person mínimo)
 _REQUIRED_PERSON_KEYS = {
     "full_name", "fuente", "status", "trust_tier",
-    "confidence_score", "verification_status",
+    "confidence_score", "verification_status", "event_id",
 }
+
+_EVENT_ID = "8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a"
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -99,9 +101,8 @@ def demo_config(tmp_path: Path) -> Path:
     cfg = tmp_path / "sources.demo.yaml"
     cfg.write_text(
         f"""project:
-  event_id: venezuela_earthquake_demo
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: demo_manual_synthetic
     name: Demo manual sintético
@@ -273,9 +274,8 @@ class TestDisabledSource:
         dump = _make_synthetic_dump(tmp_path)
         cfg = _make_demo_config(tmp_path, f"""
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: fuente_deshabilitada
     name: Fuente deshabilitada
@@ -294,9 +294,8 @@ sources:
         dump = _make_synthetic_dump(tmp_path)
         cfg = _make_demo_config(tmp_path, f"""
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: habilitada
     name: Habilitada
@@ -329,9 +328,8 @@ class TestResilience:
         dump = _make_synthetic_dump(tmp_path)
         cfg = _make_demo_config(tmp_path, f"""
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: fuente_rota
     name: Fuente rota
@@ -358,9 +356,8 @@ sources:
     def test_errors_list_non_empty_on_failure(self, tmp_path: Path, demo_config: Path) -> None:
         cfg = _make_demo_config(tmp_path, """
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: fuente_rota
     name: Fuente rota
@@ -437,6 +434,7 @@ class TestApiJsonSourceMocked:
         parser.parse.return_value = [
             Person(
                 full_name="JUAN DEMO PEREZ",
+                event_id=_EVENT_ID,
                 status="missing",
                 fuente="encuentralos_tecnosoft",
                 age_range={"min": 30, "max": 40},
@@ -444,6 +442,7 @@ class TestApiJsonSourceMocked:
             ),
             Person(
                 full_name="ANA DEMO GARCIA",
+                event_id=_EVENT_ID,
                 status="found",
                 fuente="encuentralos_tecnosoft",
                 age_range={"min": 25, "max": 35},
@@ -466,9 +465,8 @@ class TestApiJsonSourceMocked:
         _make_synthetic_dump(tmp_path)  # no se usa, pero el yaml lo necesita como dummy
         cfg = _make_demo_config(tmp_path, """
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: encuentralos_tecnosoft
     name: Encuentralos tecnosoft
@@ -496,9 +494,8 @@ sources:
     def test_api_json_persons_have_correct_status(self, tmp_path: Path, demo_config: Path) -> None:
         cfg = _make_demo_config(tmp_path, """
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: encuentralos_tecnosoft
     name: Encuentralos tecnosoft
@@ -528,9 +525,8 @@ sources:
     def test_api_json_no_entity_type_in_export(self, tmp_path: Path, demo_config: Path) -> None:
         cfg = _make_demo_config(tmp_path, """
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: encuentralos_tecnosoft
     name: Encuentralos tecnosoft
@@ -563,9 +559,8 @@ sources:
         quedar huerfano si fetch_all() falla — close() debe correr en finally."""
         cfg = _make_demo_config(tmp_path, """
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: encuentralos_tecnosoft
     name: Encuentralos tecnosoft
@@ -632,9 +627,8 @@ class TestMultipleSources:
 
         cfg = _make_demo_config(tmp_path, f"""
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: fuente_uno
     name: Fuente uno
@@ -661,9 +655,8 @@ sources:
         dump_ok = _make_synthetic_dump(tmp_path)
         cfg = _make_demo_config(tmp_path, f"""
 project:
-  event_id: test
+  event_id: 8f14e45f-ceea-467e-bd5d-0a4f2e0c1a3a
   default_country: Venezuela
-  output_mode: sanitized_jsonl
 sources:
   - id: fuente_ok
     name: Fuente ok

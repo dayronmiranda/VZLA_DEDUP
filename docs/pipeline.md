@@ -917,6 +917,25 @@ DB/API no debe asumir que un registro está verificado solo porque fue ingerido 
 
 ---
 
+## Conversión de `trust_tier`
+
+Los modelos tipados (`Person`, `Event`, `AcopioCenter`) usan `trust_tier: str` con valores `A/B/C/D` por legibilidad en configs y código de parsers.
+
+La tabla `person_sources` persiste el trust tier como `SMALLINT` (`1/2/3`). Ningún módulo del pipeline hace esa conversión hoy — la implementa Stage 1 (#81) al momento de escribir `person_sources`.
+
+Mapeo canónico:
+
+```text
+A → 1   (fuente oficial)
+B → 2   (ONG verificada)
+C → 2   (ONG no verificada)
+D → 3   (redes sociales, anónimo)
+```
+
+Este mapeo es la única fuente de verdad para esa conversión — cualquier implementación de Stage 1 debe usar exactamente estos valores en vez de inventar una escala propia.
+
+---
+
 ## 12. Verification
 
 Verification valida datos contra fuentes externas, organizaciones, hospitales, voluntarios o revisión humana.

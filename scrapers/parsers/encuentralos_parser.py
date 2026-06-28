@@ -165,6 +165,10 @@ class EncuentralosParser:
 
     Parameters
     ----------
+    event_id:
+        UUID del evento al que pertenecen los registros, inyectado por el
+        orquestador desde ``project.event_id`` del YAML de config.  El
+        parser no lo deriva ni lo valida — solo lo propaga a cada ``Person``.
     secret:
         Secreto HMAC para tokenizar cédulas.  Si no se pasa, se lee de
         la variable de entorno ``PII_HMAC_SECRET``.  Si tampoco está la
@@ -173,7 +177,8 @@ class EncuentralosParser:
 
     source_key: str = SOURCE_KEY
 
-    def __init__(self, secret: str | None = None) -> None:
+    def __init__(self, event_id: str, secret: str | None = None) -> None:
+        self._event_id = event_id
         self._secret: str | None = secret or os.getenv("PII_HMAC_SECRET") or None
         if not self._secret:
             log.warning(
@@ -297,6 +302,7 @@ class EncuentralosParser:
         try:
             return Person(
                 full_name=full_name,
+                event_id=self._event_id,
                 cedula_hmac=cedula_hmac,
                 cedula_masked=cedula_masked,
                 age_range=age_range,
